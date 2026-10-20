@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SystemLevelUp — Training</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="eyebrow">SYSTEM ONLINE</div>
+      <h1>SOLO LEVELING <span>TRAINING</span></h1>
+    </div>
+    <div class="rank" id="rank">РАНГ E</div>
+  </header>
+  <section class="stats">
+    <div class="stat"><small>УРОВЕНЬ</small><strong id="level">1</strong></div>
+    <div class="stat"><small>ОПЫТ</small><strong id="xp">0 / 100</strong></div>
+    <div class="stat"><small>АТАКА</small><strong id="attackStat">10</strong></div>
+  </section>
+  <div class="xpbar"><div id="xpFill"></div></div>
+  <main>
+    <div class="mission">
+      <div class="mission-label">ЕЖЕДНЕВНОЕ ЗАДАНИЕ</div>
+      <strong>Победи 5 теневых монстров</strong>
+      <div class="mission-progress"><span id="kills">0</span> / 5 побеждено</div>
+    </div>
+    <canvas id="game" width="720" height="420" aria-label="Игровое поле"></canvas>
+    <div class="help">ПК: WASD или стрелки — движение · Пробел — атака<br>Телефон: кнопки ниже · Коснись монстра для атаки</div>
+    <div class="mobile-controls">
+      <div class="dpad">
+        <button data-key="ArrowUp">▲</button>
+        <div><button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button></div>
+      </div>
+      <button id="attackBtn" class="attack">АТАКА</button>
+    </div>
+    <div class="actions">
+      <button id="summonBtn">ПРИЗВАТЬ ТЕНЬ <span>(50 XP)</span></button>
+      <button id="restartBtn" class="secondary">СБРОСИТЬ ПРОГРЕСС</button>
+    </div>
+  </main>
+  <footer>Фанатский тренировочный прототип. Неофициальная игра по мотивам Solo Leveling.</footer>
+</div>
+<div id="toast" role="status"></div>
+<script src="main.js"></script>
+</body>
+</html>

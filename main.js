@@ -1,0 +1,27 @@
+(() => {
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const $ = id => document.getElementById(id);
+const state = {x:canvas.width/2,y:canvas.height/2,level:1,xp:0,next:100,attack:10,kills:0,shadows:0,monsters:[],keys:new Set(),lastAttack:0};
+let toastTimer;
+function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1800)}
+function spawn(){const side=Math.floor(Math.random()*4);let x=side===0?20:side===1?canvas.width-20:Math.random()*canvas.width;let y=side===2?20:side===3?canvas.height-20:Math.random()*canvas.height;state.monsters.push({x,y,hp:30+state.level*7,max:30+state.level*7,speed:0.35+Math.random()*.25,r:13+Math.random()*3})}
+for(let i=0;i<5;i++)spawn();
+function updateUI(){$('level').textContent=state.level;$('xp').textContent=`${state.xp} / ${state.next}`;$('attackStat').textContent=state.attack;$('kills').textContent=state.kills;$('rank').textContent='РАНГ '+(state.level>=15?'S':state.level>=10?'A':state.level>=6?'B':state.level>=3?'C':'E');$('xpFill').style.width=Math.min(100,state.xp/state.next*100)+'%';}
+function levelUp(){while(state.xp>=state.next){state.xp-=state.next;state.level++;state.next=Math.floor(state.next*1.35);state.attack+=4;toast('УРОВЕНЬ ПОВЫШЕН! Теперь уровень '+state.level)}updateUI()}
+function attack(){const now=Date.now();if(now-state.lastAttack<260)return;state.lastAttack=now;let hit=false;for(let i=state.monsters.length-1;i>=0;i--){const m=state.monsters[i];if(Math.hypot(m.x-state.x,m.y-state.y)<68){m.hp-=state.attack;hit=true;if(m.hp<=0){state.monsters.splice(i,1);state.kills++;state.xp+=25;levelUp();spawn();if(state.kills===5)toast('Задание выполнено! + награда опыта');else toast('+25 XP — монстр побеждён');updateUI()}break}}if(!hit)toast('Подойди ближе к монстру!')}
+function summon(){if(state.xp<50){toast('Нужно 50 XP для призыва тени');return}state.xp-=50;state.shadows++;state.attack+=2;updateUI();toast('Тень призвана! Атака +2')}
+function drawGrid(){ctx.fillStyle='#080e1d';ctx.fillRect(0,0,720,420);ctx.strokeStyle='#182342';ctx.lineWidth=1;for(let x=0;x<720;x+=36){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,420);ctx.stroke()}for(let y=0;y<420;y+=36){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(720,y);ctx.stroke()}for(let i=0;i<22;i++){let x=(i*137+35)%720,y=(i*83+20)%420;ctx.fillStyle='#253458';ctx.fillRect(x,y,2,2)}}
+function drawPlayer(){ctx.save();ctx.translate(state.x,state.y);ctx.shadowBlur=22;ctx.shadowColor='#70eaff';ctx.fillStyle='#7aeaff';ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#131c38';ctx.beginPath();ctx.arc(0,-3,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#d4fbff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-9,10);ctx.lineTo(0,17);ctx.lineTo(9,10);ctx.stroke();ctx.restore()}
+function drawMonster(m){ctx.save();ctx.translate(m.x,m.y);ctx.shadowBlur=18;ctx.shadowColor='#9a4cff';ctx.fillStyle='#562c8d';ctx.beginPath();ctx.moveTo(0,-m.r);ctx.lineTo(m.r,m.r*.7);ctx.lineTo(-m.r,m.r*.7);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#ff6bff';ctx.fillRect(-m.r*.45,-3,4,3);ctx.fillRect(m.r*.15,-3,4,3);ctx.fillStyle='#24133c';ctx.fillRect(-m.r,-m.r-9,m.r*2,4);ctx.fillStyle='#e05cff';ctx.fillRect(-m.r,-m.r-9,m.r*2*(m.hp/m.max),4);ctx.restore()}
+function frame(){const speed=3; if(state.keys.has('ArrowUp')||state.keys.has('w'))state.y-=speed;if(state.keys.has('ArrowDown')||state.keys.has('s'))state.y+=speed;if(state.keys.has('ArrowLeft')||state.keys.has('a'))state.x-=speed;if(state.keys.has('ArrowRight')||state.keys.has('d'))state.x+=speed;state.x=Math.max(18,Math.min(702,state.x));state.y=Math.max(24,Math.min(396,state.y));
+for(const m of state.monsters){const dx=state.x-m.x,dy=state.y-m.y,d=Math.hypot(dx,dy)||1;if(d>27){m.x+=dx/d*m.speed;m.y+=dy/d*m.speed}}
+drawGrid();for(const m of state.monsters)drawMonster(m);drawPlayer();ctx.fillStyle='#8da1cb';ctx.font='12px system-ui';ctx.fillText('Теневые солдаты: '+state.shadows,14,22);requestAnimationFrame(frame)}
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();state.keys.add(e.key);if(e.key===' ')attack()});
+window.addEventListener('keyup',e=>state.keys.delete(e.key));
+document.querySelectorAll('[data-key]').forEach(b=>{const key=b.dataset.key;const down=e=>{e.preventDefault();state.keys.add(key)};const up=e=>{e.preventDefault();state.keys.delete(key)};b.addEventListener('pointerdown',down);b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up)});
+$('attackBtn').addEventListener('click',attack);$('summonBtn').addEventListener('click',summon);
+canvas.addEventListener('click',e=>{const rect=canvas.getBoundingClientRect();const x=(e.clientX-rect.left)*canvas.width/rect.width,y=(e.clientY-rect.top)*canvas.height/rect.height;let nearest=null,dist=75;for(const m of state.monsters){const d=Math.hypot(m.x-x,m.y-y);if(d<dist){nearest=m;dist=d}}if(nearest){state.x=nearest.x;state.y=nearest.y;attack()}});
+$('restartBtn').addEventListener('click',()=>{if(!confirm('Сбросить весь прогресс?'))return;state.x=360;state.y=210;state.level=1;state.xp=0;state.next=100;state.attack=10;state.kills=0;state.shadows=0;state.monsters=[];for(let i=0;i<5;i++)spawn();updateUI();toast('Прогресс сброшен')});
+updateUI();frame();
+})();
